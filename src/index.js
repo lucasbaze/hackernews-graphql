@@ -1,38 +1,39 @@
 const { GraphQLServer } = require('graphql-yoga');
+const { prisma } = require('./generated/prisma-client');
 
 const resolvers = {
     Query: {
         info: () => `This is the API for hackernews`,
         feed: (root, args, context, info) => {
-            return context.prisma.link();
+            return context.prisma.links();
         },
-        // link: (parent, args) =>
-        //     links[links.findIndex(item => item.id == args.id)],
+        link: (root, args, context, info) => {
+            return context.prisma.link({ id: args.id });
+        },
     },
     Mutation: {
         createLink: (root, args, context) => {
             return context.prisma.createLink({
-                url: args.description,
+                url: args.url,
                 description: args.description,
             });
         },
-        // updateLink: (parent, args) => {
-        //     let index = links.findIndex(item => item.id == args.id);
-        //     let link = links[index];
-        //     link = {
-        //         ...args,
-        //     };
-        //     links[index] = link;
-        //     return link;
-        // },
-        // deleteLink: (parent, args) => {
-        //     let index = links.findIndex(item => item.id == args.id);
-        //     let removed = links[index];
-        //     let first = links.slice(0, index);
-        //     let last = links.slice(index + 1, 0);
-        //     links = [...first, ...last];
-        //     return removed;
-        // },
+        updateLink: (root, args, context) => {
+            return context.prisma.updateLink({
+                data: {
+                    url: args.url,
+                    description: args.description,
+                },
+                where: {
+                    id: args.id,
+                },
+            });
+        },
+        deleteLink: (root, args, context) => {
+            return context.prisma.deleteLink({
+                id: args.id,
+            });
+        },
     },
 
     //Can be omitted because the schema defines the return data and
@@ -47,6 +48,7 @@ const resolvers = {
 const server = new GraphQLServer({
     typeDefs: './src/schema.graphql',
     resolvers,
+    context: { prisma },
 });
 
 server.start(() => console.log(`Server is running on PORT 4000`));
