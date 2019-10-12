@@ -69,10 +69,30 @@ function deleteLink(parent, args, context, info) {
     });
 }
 
+async function vote(root, args, context, info) {
+    //Get user Id. stored in the authrotization bearer token
+    let userId = getUserId(context);
+    //check if the user has already voted for this item
+    const linkExists = await context.prisma.$exists.vote({
+        user: { id: userId },
+        link: { id: args.linkId },
+    });
+    //
+    if (linkExists) {
+        throw new Error(`Already voted for link: ${args.link}`);
+    }
+    //
+    return context.prisma.createVote({
+        user: { connect: { id: userId } },
+        link: { connect: { id: args.linkId } },
+    });
+}
+
 module.exports = {
     signup,
     login,
     createLink,
     updateLink,
     deleteLink,
+    vote,
 };
